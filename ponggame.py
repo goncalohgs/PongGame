@@ -46,6 +46,17 @@ def main():
     if random.randint(1, 2) == 1:
         ball_accel_y *= -1
 
+    # create the clock object to keep track of the time
+    clock = pygame.time.Clock()
+
+    """
+    this is to check whether or not to move the ball
+    we will make it move after 3 seconds
+    """
+    started = False
+
+    
+
   # GAME LOOP
     while True:
         """
@@ -53,6 +64,37 @@ def main():
         needs to be called everytime the game updates
         """
         screen.fill(COLOR_BLACK)
+
+        # make the ball move after 3 seconds
+        if not started:
+            # load the Consolas font
+            font = pygame.font.SysFont('Consolas', 30)
+
+            # draw some text to the center of the screen
+            text = font.render('Press Space to Start', True, COLOR_WHITE)
+            text_rect = text.get_rect()
+            text_rect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
+            screen.blit(text, text_rect)
+
+            # update the display
+            pygame.display.flip()
+
+            clock.tick(60)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        started = True
+
+                continue
+                """
+        get the time elapse between now and the last frame
+        60 is an arbitrary number but the game runs smooth at 60 FPS
+        """
+        delta_time = clock.tick(60)
 
         # checking for events
         for event in pygame.event.get():
@@ -62,7 +104,41 @@ def main():
 
                 # exit the function, to finish the game
                 return
-            
+
+        # if the ball goes out of bounds, end the game
+        if ball_rect.left <= 0 or ball_rect.left >= SCREEN_WIDTH:
+            return
+
+        # if the ball is getting close to the top (15 is an arbitrary number, but I found that it worked great)
+        if ball_rect.top < 0:
+            # invert its vertical velocity
+            ball_accel_y *= -1
+            # add a bit of y to it to not trigger the above code again
+            ball_rect.top = 0
+        # do the same thing with the bottom
+        if ball_rect.bottom > SCREEN_HEIGHT - ball_rect.height:
+            ball_accel_y *= -1
+            ball_rect.top = SCREEN_HEIGHT - ball_rect.heigh
+
+        """
+        if paddle_1_rect collides with the ball and the ball is in front of it,
+        change the speed of the ball and make it move a little in the other way
+        """
+        if paddle_1_rect.colliderect(ball_rect) and paddle_1_rect.left < ball_rect.left:
+            ball_accel_x *= -1
+            ball_rect.left += 5
+
+        # do the same with paddle_2_rect
+        if paddle_2_rect.colliderect(ball_rect) and paddle_2_rect.left > ball_rect.left:
+            ball_accel_x *= -1
+            ball_rect.left -= 5
+
+        # if the game is started (after 3 seconds this is true)
+        if started:
+            # move the ball
+            ball_rect.left += ball_accel_x * delta_time
+            ball_rect.top += ball_accel_y * delta_time  
+              
         # draw player 1 and player 2's paddle rects with the white color
         pygame.draw.rect(screen, COLOR_WHITE, paddle_1_rect)
         pygame.draw.rect(screen, COLOR_WHITE, paddle_2_rect)
@@ -72,6 +148,8 @@ def main():
 
         # update the display (this is necessary for Pygame)
         pygame.display.update()
+
+
 
 if __name__ == '__main__':
         main()
